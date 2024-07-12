@@ -1,47 +1,38 @@
-/**
- * Класс User управляет авторизацией, выходом и
- * регистрацией пользователя из приложения
- * Имеет свойство URL, равное '/user'.
- * */
+
 class User {
-  /**
-   * Устанавливает текущего пользователя в
-   * локальном хранилище.
-   * */
+  URL = "/user";
+  
   static setCurrent(user) {
-
+    localStorage.user = JSON.stringify(user);
   }
 
-  /**
-   * Удаляет информацию об авторизованном
-   * пользователе из локального хранилища.
-   * */
   static unsetCurrent() {
-
+    localStorage.removeItem("user");
   }
 
-  /**
-   * Возвращает текущего авторизованного пользователя
-   * из локального хранилища
-   * */
+  
   static current() {
-
+    return JSON.parse(localStorage.user);
   }
 
-  /**
-   * Получает информацию о текущем
-   * авторизованном пользователе.
-   * */
-  static fetch(callback) {
-
+  static fetch (callback) {
+    const fetchObj = {
+      url: Entity.URL + "/current",
+      data: User.current(),
+      method: "GET",
+      callback: (err, response) => {
+        if (!response.success) {
+          User.unsetCurrent();
+        } else if (response.user) {
+          User.setCurrent(response.user);
+        }
+        callback(err, response);
+      },
+    };
+    createRequest(fetchObj);
   }
 
-  /**
-   * Производит попытку авторизации.
-   * После успешной авторизации необходимо
-   * сохранить пользователя через метод
-   * User.setCurrent.
-   * */
+ 
   static login(data, callback) {
     createRequest({
       url: this.URL + '/login',
@@ -57,21 +48,32 @@ class User {
     });
   }
 
-  /**
-   * Производит попытку регистрации пользователя.
-   * После успешной авторизации необходимо
-   * сохранить пользователя через метод
-   * User.setCurrent.
-   * */
   static register(data, callback) {
-
+    const registerObj = {
+      url: Entity.URL + "/register",
+      data,
+      method: "POST",
+      callback: (err, response) => {
+        if (response.user) {
+          User.setCurrent(response.user);
+        }
+        callback(err, response);
+      },
+    };
+    createRequest(registerObj);
   }
 
-  /**
-   * Производит выход из приложения. После успешного
-   * выхода необходимо вызвать метод User.unsetCurrent
-   * */
   static logout(callback) {
-
+    const logoutObj = {
+      url: Entity.URL + "/logout",
+      method: "POST",
+      callback: (err, response) => {
+        if (response.user) {
+          User.setCurrent(response.user);
+        }
+        callback(err, response);
+      },
+    };
+    createRequest(logoutObj);
   }
 }
