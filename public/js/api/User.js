@@ -12,11 +12,11 @@ class User {
 
   
   static current() {
-    return JSON.parse(localStorage.user);
+    return JSON.parse(localStorage.getItem("user"));
   }
 
   static fetch (callback) {
-    const fetchObj = {
+    createRequest({
       url: Entity.URL + "/current",
       data: User.current(),
       method: "GET",
@@ -28,52 +28,59 @@ class User {
         }
         callback(err, response);
       },
-    };
-    createRequest(fetchObj);
+    });
   }
 
  
   static login(data, callback) {
-    createRequest({
-      url: this.URL + '/login',
-      method: 'POST',
-      responseType: 'json',
-      data,
-      callback: (err, response) => {
-        if (response && response.user) {
-          this.setCurrent(response.user);
+    if (data.email && data.password){
+      createRequest({
+        url: this.URL + '/login',
+        method: 'POST',
+        data,
+        callback: (err, response) => {
+          if (response.success) {
+            User.setCurrent(response.user);
+          }
+          callback(err, response);
+         
         }
-        callback(err, response);
-      }
-    });
+      });
+    } else {
+      throw new Error ("не все обязательные параметры заполнены");
+    }
+    
+   
   }
 
   static register(data, callback) {
-    const registerObj = {
-      url: Entity.URL + "/register",
-      data,
-      method: "POST",
-      callback: (err, response) => {
-        if (response.user) {
-          User.setCurrent(response.user);
-        }
-        callback(err, response);
-      },
-    };
-    createRequest(registerObj);
+    if(data.email && data.password && data.name){
+      createRequest({
+        url: Entity.URL + "/register",
+        data,
+        method: "POST",
+        callback: (err, response) => {
+          if (response.user) {
+            User.setCurrent(response.user);
+          }
+          callback(err, response);
+        },
+      });
+    } else {
+      throw new Error ("не все обязательные параметры заполнены");
+    }
   }
 
   static logout(callback) {
-    const logoutObj = {
+    createRequest({
       url: Entity.URL + "/logout",
       method: "POST",
       callback: (err, response) => {
-        if (response.user) {
-          User.setCurrent(response.user);
+        if (response.success) {
+          User.unsetCurrent();
         }
         callback(err, response);
       },
-    };
-    createRequest(logoutObj);
+    });
   }
 }
